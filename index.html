@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SasyaMitra</title>
+    <!-- Local Logo as Favicon -->
+    <link rel="icon" type="image/png" href="assets/logo.png">
+    <!-- Google Fonts & FontAwesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Sign-In Library -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        :root {
+            --bg-color: #131314;
+            --sidebar-bg: #1e1f20;
+            --sidebar-hover: #2d2e30;
+            --card-bg: #1e1f20;
+            --text-color: #e3e3e3;
+            --text-muted: #9aa0a6;
+            --border-color: #333537;
+            --chat-bubble-user: #2b2c2e;
+            --chat-bubble-ai: transparent;
+            --accent-blue: #1a73e8;
+            --accent-blue-hover: #1557b0;
+            --input-bg: #1e1f20;
+            --pill-bg: #28292a;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #ffffff;
+            --sidebar-bg: #f0f4f9;
+            --sidebar-hover: #e2e8f0;
+            --card-bg: #f0f4f9;
+            --text-color: #1f1f1f;
+            --text-muted: #5f6368;
+            --border-color: #e0e0e0;
+            --chat-bubble-user: #f0f4f9;
+            --chat-bubble-ai: transparent;
+            --accent-blue: #1a73e8;
+            --accent-blue-hover: #1557b0;
+            --input-bg: #f0f4f9;
+            --pill-bg: #e8eaed;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+        }
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        .sidebar {
+            width: 280px;
+            min-width: 280px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 16px 12px;
+            z-index: 50;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar.active {
+            transform: translateX(0);
+        }
+
+        .sidebar-top {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 8px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 18px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .icon-btn:hover {
+            background-color: var(--sidebar-hover);
+        }
+
+        .new-chat-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--pill-bg);
+            border: none;
+            padding: 12px 16px;
+            border-radius: 28px;
+            cursor: pointer;
+            color: var(--text-color);
+            font-weight: 500;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .new-chat-btn:hover {
+            background-color: var(--sidebar-hover);
+        }
+
+        .menu-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .menu-item:hover {
+            background-color: var(--sidebar-hover);
+        }
+
+        .menu-item i {
+            width: 20px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .history-section {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 16px;
+            padding-right: 4px;
+        }
+
+        .history-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            padding: 8px 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13.5px;
+            color: var(--text-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: background 0.2s;
+        }
+
+        .history-item:hover {
+            background-color: var(--sidebar-hover);
+        }
+
+        .sidebar-bottom {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 12px;
+        }
+
+        .user-profile-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px;
+            border-radius: 24px;
+            background: var(--pill-bg);
+            gap: 6px;
+        }
+
+        .user-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background-color: #34a853;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex: 1;
+            margin: 0 4px;
+        }
+
+        .user-name {
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-email {
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            height: 60px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .app-title-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 500;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+        }
+
+        .app-title-btn img {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .lang-select {
+            background: var(--pill-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .upgrade-btn {
+            background: linear-gradient(135deg, #1a73e8, #34a853);
+            color: #ffffff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            scroll-behavior: smooth;
+        }
+
+        .chat-wrapper {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .welcome-view {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 50vh;
+            text-align: center;
+            gap: 20px;
+        }
+
+        .welcome-title {
+            font-size: 36px;
+            font-weight: 500;
+            background: linear-gradient(135deg, #1a73e8, #34a853);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .start-btn {
+            background: var(--pill-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .start-btn:hover {
+            background: var(--sidebar-hover);
+            transform: translateY(-2px);
+        }
+
+        .message-row {
+            display: flex;
+            gap: 14px;
+            width: 100%;
+        }
+
+        .message-row.user {
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            max-width: 85%;
+            padding: 14px 18px;
+            border-radius: 20px;
+            font-size: 15px;
+            line-height: 1.6;
+            word-break: break-word;
+        }
+
+        .message-row.user .message-bubble {
+            background-color: var(--chat-bubble-user);
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-row.ai .message-bubble {
+            background-color: var(--chat-bubble-ai);
+            border-bottom-left-radius: 4px;
+            width: 100%;
+        }
+
+        .ai-message-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+
+        .speak-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px 8px;
+            border-radius: 50%;
+            transition: color 0.2s;
+        }
+
+        .speak-btn:hover {
+            color: var(--accent-blue);
+        }
+
+        .ai-icon-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ai-icon-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .input-wrapper {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 16px 16px 16px;
+        }
+
+        .input-box {
+            width: 100%;
+            max-width: 800px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-box input {
+            flex: 1;
+            background: none;
+            border: none;
+            outline: none;
+            color: var(--text-color);
+            font-size: 15px;
+            padding: 8px 0;
+        }
+
+        .mic-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 18px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .mic-btn:hover, .mic-btn.listening {
+            color: #ea4335;
+        }
+
+        .send-arrow-btn {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .footer-note {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        #login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .login-card img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Login Overlay Screen -->
+    <div id="login-screen" style="display:none;">
+        <div class="login-card">
+            <img src="assets/logo.png" alt="SasyaMitra Logo">
+            <h2 style="font-weight: 500;">SasyaMitra</h2>
+            <p style="font-size: 14px; color: var(--text-muted);">Sign in with your Google account to continue:</p>
+            <div id="g_id_onload"
+                 data-client_id="688285102058-6m1qgaut63gdi8kttp1rlkk0m9aimi2l.apps.googleusercontent.com"
+                 data-callback="handleCredentialResponse">
+            </div>
+            <div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_blue"></div>
+            <p id="login-error" style="display:none; color:#f28b82; font-size:13px; margin-top:14px;"></p>
+        </div>
+    </div>
+
+    <!-- Mobile Drawer Overlay -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-top">
+            <div class="sidebar-header">
+                <button class="icon-btn" onclick="toggleSidebar()" title="Toggle Menu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+
+            <button class="new-chat-btn" onclick="startNewChat()">
+                <i class="fa-solid fa-plus"></i>
+                <span>New chat</span>
+            </button>
+
+            <div class="menu-list">
+                <a class="menu-item" href="#">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                    <span>Become a Teacher</span>
+                </a>
+            </div>
+
+            <div class="history-section">
+                <div class="history-title">Recent</div>
+                <div id="history-list">
+                    <div style="padding: 8px 14px; font-size: 13px; color: var(--text-muted);">No recent chats</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-bottom">
+            <div class="user-profile-bar">
+                <div class="user-avatar" id="avatar-display">A</div>
+                <div class="user-info">
+                    <span class="user-name" id="user-name-display">Anitt K Binoy</span>
+                    <span class="user-email" id="user-email-display">anitt@example.com</span>
+                </div>
+                <!-- Theme Toggle Button -->
+                <button class="icon-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode" style="width: 30px; height: 30px;">
+                    <i class="fa-solid fa-moon" id="theme-icon"></i>
+                </button>
+                <!-- Logout Button -->
+                <button class="icon-btn" onclick="handleLogout()" title="Logout" style="width: 30px; height: 30px; color: #ea4335;">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Chat Workspace -->
+    <main class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <button class="icon-btn" onclick="toggleSidebar()">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <button class="app-title-btn" onclick="startNewChat()">
+                    <img src="assets/logo.png" alt="SasyaMitra Logo">
+                    <span>SasyaMitra</span>
+                </button>
+            </div>
+            <div class="header-right">
+                <select id="language-select" class="lang-select">
+                    <option value="ml">മലയാളം</option>
+                    <option value="en">English</option>
+                    <option value="ta">தமிழ்</option>
+                    <option value="hi">हिन्दी</option>
+                    <option value="kn">ಕನ್ನಡ</option>
+                </select>
+
+                <button class="upgrade-btn">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>Upgrade</span>
+                </button>
+            </div>
+        </header>
+
+        <section class="chat-container" id="chat-container">
+            <div class="chat-wrapper" id="chat-wrapper">
+                <div class="welcome-view" id="welcome-view">
+                    <h1 class="welcome-title">We can start SasyaMitra</h1>
+                    <button class="start-btn" onclick="focusChatInput()">
+                        <i class="fa-solid fa-comments"></i>
+                        <span>Start chatting with SasyaMitra</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <div class="input-wrapper">
+            <div class="input-box">
+                <input type="file" id="image-file-input" accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
+                
+                <button class="mic-btn" id="upload-img-btn" type="button" title="ഫോട്ടോ അപ്‌ലോഡ് ചെയ്യുക" onclick="document.getElementById('image-file-input').click()">
+                    <i class="fa-solid fa-image"></i>
+                </button>
+
+                <input type="text" id="user-input" placeholder="Ask anything..." onkeypress="handleKeyPress(event)">
+                
+                <button class="mic-btn" id="mic-btn" type="button" title="സംസാരിച്ച് ചോദിക്കുക">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+
+                <button class="send-arrow-btn" onclick="sendMessage()" title="Send Message">
+                    <i class="fa-solid fa-arrow-up"></i>
+                </button>
+            </div>
+
+            <div id="image-preview-container" style="display:none; margin-top: 8px; align-items: center; gap: 10px; background: var(--card-bg); padding: 6px 12px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <img id="preview-img" src="" alt="Preview" style="height: 40px; border-radius: 6px;">
+                <span style="font-size: 12px; color: var(--text-muted);" id="file-name-display"></span>
+                <button onclick="clearSelectedImage()" style="background:none; border:none; color: #ea4335; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="footer-note">
+                SasyaMitra is AI and can make mistakes. Verify important information.
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentUser = null;
+        let authToken = localStorage.getItem('sasyamitra_auth_token') || null;
+        let selectedImageBase64 = null;
+
+        // Remember selected language
+        window.addEventListener('DOMContentLoaded', () => {
+            const sel = document.getElementById('language-select');
+            const savedLang = localStorage.getItem('sasyamitra_lang');
+            if (savedLang) sel.value = savedLang;
+            sel.addEventListener('change', () => localStorage.setItem('sasyamitra_lang', sel.value));
+        });
+
+        // Page Load Session Verification
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('sasyamitra_user');
+            if (authToken && savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    document.getElementById('login-screen').style.display = 'none';
+                    if (currentUser.name) {
+                        document.getElementById('user-name-display').innerText = currentUser.name;
+                        document.getElementById('avatar-display').innerText = currentUser.name.charAt(0).toUpperCase();
+                    }
+                    if (currentUser.email) {
+                        document.getElementById('user-email-display').innerText = currentUser.email;
+                    }
+                    loadChatHistory();
+                } catch (e) {
+                    showLogin();
+                }
+            } else {
+                showLogin();
+            }
+        });
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            const icon = document.getElementById('theme-icon');
+            icon.className = newTheme === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+        }
+
+        function focusChatInput() {
+            document.getElementById('user-input').focus();
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        function formatAnswer(text) {
+            let html = escapeHtml(text);
+            html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: var(--accent-blue);">$1</a>');
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/^[ \t]*[*\-•][ \t]+/gm, '• ');
+            return html.replace(/\n/g, '<br>');
+        }
+
+        function showLogin(message) {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem('sasyamitra_auth_token');
+            localStorage.removeItem('sasyamitra_user');
+            document.getElementById('login-screen').style.display = 'flex';
+            const err = document.getElementById('login-error');
+            if (message) {
+                err.innerText = message;
+                err.style.display = 'block';
+            } else {
+                err.style.display = 'none';
+            }
+        }
+
+        function handleLogout() {
+            try {
+                if (window.google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect();
+            } catch (e) {}
+            localStorage.removeItem('sasyamitra_auth_token');
+            localStorage.removeItem('sasyamitra_user');
+            authToken = null;
+            currentUser = null;
+            showLogin();
+        }
+
+        function apiFetch(url, options = {}) {
+            const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+            if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
+            return fetch(url, Object.assign({}, options, { headers })).then(res => {
+                if (res.status === 401) {
+                    showLogin('Session expired. Please sign in again. (വീണ്ടും സൈൻ ഇൻ ചെയ്യുക)');
+                }
+                return res;
+            });
+        }
+
+        function loadChatHistory() {
+            apiFetch('/api/history')
+                .then(res => res.json())
+                .then(data => {
+                    const historyList = document.getElementById('history-list');
+                    historyList.innerHTML = '';
+                    if (data.history && data.history.length > 0) {
+                        data.history.forEach(item => {
+                            const div = document.createElement('div');
+                            div.className = 'history-item';
+                            div.innerText = item.query_text;
+                            historyList.appendChild(div);
+                        });
+                    } else {
+                        historyList.innerHTML = '<div style="padding: 8px 14px; font-size: 13px; color: var(--text-muted);">No recent chats</div>';
+                    }
+                })
+                .catch(err => console.error("Error loading history:", err));
+        }
+
+        function handleCredentialResponse(response) {
+            fetch('/api/auth/google', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: response.credential })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    currentUser = data.user;
+                    authToken = data.token;
+                    localStorage.setItem('sasyamitra_auth_token', authToken);
+                    localStorage.setItem('sasyamitra_user', JSON.stringify(currentUser));
+
+                    document.getElementById('login-error').style.display = 'none';
+                    document.getElementById('login-screen').style.display = 'none';
+                    if (currentUser.name) {
+                        document.getElementById('user-name-display').innerText = currentUser.name;
+                        document.getElementById('avatar-display').innerText = currentUser.name.charAt(0).toUpperCase();
+                    }
+                    if (currentUser.email) {
+                        document.getElementById('user-email-display').innerText = currentUser.email;
+                    }
+                    loadChatHistory();
+                } else {
+                    showLogin(data.error || 'Sign-in failed. Please try again.');
+                }
+            })
+            .catch(err => {
+                console.error("Auth Error:", err);
+                showLogin('Could not reach the server. Please try again.');
+            });
+        }
+
+        function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 800;
+                        const MAX_HEIGHT = 800;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                        document.getElementById('preview-img').src = selectedImageBase64;
+                        document.getElementById('file-name-display').innerText = file.name;
+                        document.getElementById('image-preview-container').style.display = 'flex';
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function clearSelectedImage() {
+            selectedImageBase64 = null;
+            document.getElementById('image-file-input').value = '';
+            document.getElementById('image-preview-container').style.display = 'none';
+        }
+
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const langSelect = document.getElementById('language-select').value;
+                const langMap = { ml: 'ml-IN', ta: 'ta-IN', hi: 'hi-IN', kn: 'kn-IN', en: 'en-US' };
+                
+                text = String(text).replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[*#]/g, '');
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = langMap[langSelect] || 'ml-IN';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Voice typing: speaks in selected language -> typed in the same language
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const VOICE_LANG_MAP = { ml: 'ml-IN', en: 'en-IN', ta: 'ta-IN', hi: 'hi-IN', kn: 'kn-IN' };
+
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.interimResults = true;
+            recognition.continuous = false;
+            recognition.maxAlternatives = 1;
+
+            const micBtn = document.getElementById('mic-btn');
+            const chatInput = document.getElementById('user-input');
+            let listening = false;
+            let baseText = '';
+            let finalText = '';
+
+            function resetMicUi() {
+                listening = false;
+                micBtn.classList.remove('listening');
+                chatInput.placeholder = 'Ask anything...';
+            }
+
+            micBtn.addEventListener('click', () => {
+                if (listening) {
+                    recognition.stop();
+                    return;
+                }
+                const langSelect = document.getElementById('language-select').value;
+                recognition.lang = VOICE_LANG_MAP[langSelect] || 'ml-IN';
+                baseText = chatInput.value.trim() ? chatInput.value.trim() + ' ' : '';
+                finalText = '';
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.error(e);
+                }
+            });
+
+            recognition.onstart = () => {
+                listening = true;
+                micBtn.classList.add('listening');
+                chatInput.placeholder = 'കേൾക്കുന്നുണ്ട്, സംസാരിക്കൂ...';
+            };
+
+            recognition.onresult = (event) => {
+                let interim = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const t = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalText += t;
+                    } else {
+                        interim += t;
+                    }
+                }
+                chatInput.value = baseText + finalText + interim;
+            };
+
+            let lastError = '';
+            let gotAudio = false;
+
+            const ERROR_MSG = {
+                'not-allowed': 'മൈക്രോഫോൺ അനുമതി ബ്ലോക്ക് ആണ്. അഡ്രസ് ബാറിലെ ലോക്ക് ഐക്കൺ → Microphone → Allow ചെയ്യുക.',
+                'service-not-allowed': 'ഈ ബ്രൗസറിൽ വോയ്സ് ടൈപ്പിംഗ് അനുവദനീയമല്ല. Google Chrome ഉപയോഗിക്കുക.',
+                'audio-capture': 'മൈക്രോഫോൺ കണ്ടെത്താനായില്ല. Windows-ൽ മൈക്ക് ഓൺ ആണോ എന്ന് നോക്കുക.',
+                'network': 'വോയ്സ് സർവീസിലേക്ക് ഇന്റർനെറ്റ് കണക്ഷൻ കിട്ടുന്നില്ല. (Chrome-ലെ വോയ്സ് ടൈപ്പിംഗിന് ഇന്റർനെറ്റ് വേണം.)',
+                'language-not-supported': 'ഈ ഭാഷ ഈ ബ്രൗസറിൽ സപ്പോർട്ട് ചെയ്യുന്നില്ല. English തിരഞ്ഞെടുത്ത് നോക്കുക.',
+                'no-speech': 'ശബ്ദം കേട്ടില്ല. ശരിയായ മൈക്ക് ആണോ സെലക്ട് ചെയ്തിരിക്കുന്നത് എന്ന് നോക്കുക.'
+            };
+
+            recognition.onaudiostart = () => { gotAudio = true; };
+
+            recognition.onerror = (event) => {
+                lastError = event.error;
+                if (event.error === 'aborted') return;
+                const msg = ERROR_MSG[event.error] || ('Voice error: ' + event.error);
+                resetMicUi();
+                chatInput.placeholder = msg;
+                alert(msg);
+            };
+
+            recognition.onend = () => {
+                chatInput.value = chatInput.value.trim();
+                const hadError = lastError && lastError !== 'aborted';
+                const hadText = finalText.trim().length > 0;
+                resetMicUi();
+                if (!hadError && !hadText) {
+                    chatInput.placeholder = 'ശബ്ദം ടൈപ്പ് ആയില്ല. ഒന്നുകൂടി ശ്രമിക്കുക.';
+                    setTimeout(() => { chatInput.placeholder = 'Ask anything...'; }, 4000);
+                }
+                lastError = '';
+                gotAudio = false;
+            };
+        } else {
+            document.getElementById('mic-btn').style.display = 'none';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('user-input');
+            const query = input.value.trim();
+            const language = document.getElementById('language-select').value;
+            if (!query && !selectedImageBase64) return;
+            if (!authToken) { showLogin('Please sign in first.'); return; }
+
+            const welcomeView = document.getElementById('welcome-view');
+            if (welcomeView) welcomeView.style.display = 'none';
+
+            const chatWrapper = document.getElementById('chat-wrapper');
+            const userRow = document.createElement('div');
+            userRow.className = 'message-row user';
+            
+            let userHtml = `<div class="message-bubble">`;
+            if (selectedImageBase64) {
+                userHtml += `<img src="${selectedImageBase64}" style="max-width: 150px; border-radius: 8px; display: block; margin-bottom: 6px;">`;
+            }
+            if (query) {
+                userHtml += `<div>${escapeHtml(query)}</div>`;
+            }
+            userHtml += `</div>`;
+            userRow.innerHTML = userHtml;
+            chatWrapper.appendChild(userRow);
+
+            const imgPayload = selectedImageBase64;
+            input.value = '';
+            clearSelectedImage();
+
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            const aiRow = document.createElement('div');
+            aiRow.className = 'message-row ai';
+            aiRow.innerHTML = `
+                <div class="ai-icon-avatar"><img src="assets/logo.png" alt="Logo"></div>
+                <div class="message-bubble" style="width:100%;">
+                    <i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i> Thinking...
+                </div>
+            `;
+            chatWrapper.appendChild(aiRow);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            apiFetch('/api/chat', {
+                method: 'POST',
+                body: JSON.stringify({ query: query, language: language, image: imgPayload })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const bubble = aiRow.querySelector('.message-bubble');
+                if (data.response) {
+                    const rawText = data.response;
+                    bubble.innerHTML = `
+                        <div>${formatAnswer(rawText)}</div>
+                        <div class="ai-message-header">
+                            <button class="speak-btn" data-text="${escapeHtml(rawText)}" onclick="speakText(this.dataset.text)" title="ശബ്ദത്തിൽ കേൾക്കുക">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                        </div>
+                    `;
+                } else if (data.error) {
+                    bubble.innerText = data.error;
+                } else {
+                    bubble.innerText = "Sorry, something went wrong. Please try again.";
+                }
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                if (authToken) loadChatHistory();
+            })
+            .catch(err => {
+                const bubble = aiRow.querySelector('.message-bubble');
+                bubble.innerText = "Could not connect to the server. Please try again later.";
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            });
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function startNewChat() {
+            const chatWrapper = document.getElementById('chat-wrapper');
+            chatWrapper.innerHTML = `
+                <div class="welcome-view" id="welcome-view">
+                    <h1 class="welcome-title">We can start SasyaMitra</h1>
+                    <button class="start-btn" onclick="focusChatInput()">
+                        <i class="fa-solid fa-comments"></i>
+                        <span>Start chatting with SasyaMitra</span>
+                    </button>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
